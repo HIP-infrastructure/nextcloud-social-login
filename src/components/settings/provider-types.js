@@ -29,6 +29,14 @@ export default {
         title: t(appName, 'Display name claim (optional)'),
         type: 'text',
       },
+      userNameClaim: {
+        title: 'Username claim (optional)',
+        type: 'text',
+      },
+      userNameClaim: {
+        title: 'Username claim (optional)',
+        type: 'text',
+      },
       userInfoUrl: {
         title: t(appName, 'User info URL (optional)'),
         type: 'url',

@@ -125,6 +125,7 @@ class ProviderService
                 'user_info_url'    => 'userInfoUrl',
             ],
             'displayname_claim' => 'displayNameClaim',
+            'username_claim' => 'userNameClaim',
             'groups_claim'  => 'groupsClaim',
             'group_mapping' => 'groupMapping',
             'logout_url'    => 'logoutUrl',
@@ -430,6 +431,12 @@ class ProviderService
         if (strlen($uid) > 64 || !preg_match('#^[a-z0-9_.@-]+$#i', $profileId)) {
             $uid = $provider.'-'.md5($profileId);
         }
+
+        $userNameClaim = $config['username_claim'];
+        if (!empty($userNameClaim)) {
+            $uid = $profileId;
+        }
+
         return $this->login($uid, $profile, $provider.'-');
     }
 

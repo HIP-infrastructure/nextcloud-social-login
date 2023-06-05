@@ -27,8 +27,8 @@
     "None" : "Keine",
     "Default group" : "Standardgruppe",
     "Add group mapping" : "Gruppenzuordnung hinzufügen",
-    "App id" : "App-Id",
-    "Secret" : "Geheimnis",
+    "App id" : "App-ID",
+    "Secret" : "Passwort",
     "Allow login only from specified domain" : "Anmeldung nur von der angegebenen Domain erlauben",
     "Allow login only for specified organizations" : "Anmeldung nur für angegebene Organisationen zulassen",
     "Allow login only for specified workspace" : "Anmeldung nur für den angegebenen Workspace zulassen",
@@ -72,12 +72,12 @@
     "Custom OAuth1" : "Benutzerdefiniertes OAuth1",
     "Profile url" : "Profil-URL",
     "Consumer key" : "Verbraucherschlüssel",
-    "Consumer Secret" : "Verbrauchergeheimnis",
+    "Consumer Secret" : "Verbraucherpasswort",
     "Custom Discourse" : "Benutzerdefinierter Discourse",
     "Base url" : "Basis-URL",
     "SSO Secret" : "SSO-Geheimnis",
     "Disable password confirmation on settings change" : "Passwortbestätigung bei Einstellungsänderung deaktivieren",
-    "Social login connect" : "Soziale Anmeldung verbinden",
+    "Social login connect" : "Mittels Social-Anmeldung verbinden",
     "Available providers" : "Verfügbare Anbieter"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

@@ -67,6 +67,7 @@ You can copy link of certain login button to get proper "redirect url" for OAuth
 * [Discord](#configure-discord)
 * [Telegram](https://github.com/zorn-v/nextcloud-social-login/blob/master/docs/sso/telegram.md)
 * PlexTv - you can use any title as app id
+* [Codeberg](https://github.com/zorn-v/nextcloud-social-login/blob/master/docs/sso/codeberg.md)
 
 Details about "Allow login only from specified domain" google setting you can find here [#44](https://github.com/zorn-v/nextcloud-social-login/issues/44)
 You can use comma separated list for multiple domains
@@ -114,6 +115,7 @@ To properly configure discord you have to:
 3. Copy `CLIENT ID` and generate and copy `CLIENT SECRET`
 4. Open in Nextcloud `Settings -> Social Login` and paste `CLIENT ID` into field `App id` and `CLIENT SECRET` into `Secret`.
 5. Select default group for users created this way.
+6. For group mapping check [#395](https://github.com/zorn-v/nextcloud-social-login/pull/395)
 
 ## Hint
 

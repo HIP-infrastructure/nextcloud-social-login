@@ -3,6 +3,7 @@ OC.L10N.register(
     {
     "Save" : "Lưu",
     "None" : "Không có",
+    "Team ID" : "ID nhóm",
     "Secret" : "Mật khẩu",
     "Title" : "Tiêu đề"
 },

@@ -44,6 +44,7 @@ class ProviderService
         'button_text_wo_prefix',
     ];
     const DEFAULT_PROVIDERS = [
+        'apple',
         'google',
         'amazon',
         'facebook',
@@ -78,6 +79,10 @@ class ProviderService
             'keys' => [
                 'id' => 'appid',
                 'secret' => 'secret',
+                // Apple below
+                'team_id' => 'teamId',
+                'key_id' => 'keyId',
+                'key_content' => 'keyContent',
             ],
         ],
         self::TYPE_OPENID => [
@@ -233,7 +238,7 @@ class ProviderService
     {
         $config = [];
         $scopes = [
-            'discord' => 'identify email guilds',
+            'discord' => 'identify email guilds guilds.members.read',
         ];
         $providers = json_decode($this->config->getAppValue($this->appName, 'oauth_providers'), true) ?: [];
         if (is_array($providers) && in_array($provider, array_keys($providers))) {
@@ -243,10 +248,13 @@ class ProviderService
                     $config = array_merge([
                         'callback' => $callbackUrl,
                         'default_group' => $prov['defaultGroup'],
-                        'orgs' => $prov['orgs'] ?? null,
-                        'workspace' => $prov['workspace'] ?? null,
-                        'guilds' => $prov['guilds'] ?? null,
                     ], $this->applyConfigMapping('default', $prov));
+                    $opts = ['orgs', 'workspace', 'guilds', 'groupMapping', 'useGuildNames'];
+                    foreach ($opts as $opt) {
+                        if (isset($prov[$opt])) {
+                            $config[$opt] = $prov[$opt];
+                        }
+                    }
 
                     if (isset($scopes[$name])) {
                         $config['scope'] = $scopes[$name];
@@ -407,13 +415,38 @@ class ProviderService
             $checkGuilds = function () use ($allowedGuilds, $userGuilds, $config) {
                 foreach ($userGuilds as $guild) {
                     if (in_array($guild->id ?? null, $allowedGuilds)) {
-                        return;
+                        return $guild->id;
                     }
                 }
                 $this->storage->clear();
                 throw new LoginException($this->l->t('Login is available only to members of the following Discord guilds: %s', $config['guilds']));
             };
-            $checkGuilds();
+            $matchingGuildId = $checkGuilds();
+
+            // Use discord guild member nickname as display name
+            if (!empty($config['useGuildNames']) && $matchingGuildId) {
+                $guildMember = $adapter->apiRequest('users/@me/guilds/' . $matchingGuildId . '/member' );
+                $profile->displayName = $guildMember->nick ?? $profile->displayName;
+            }
+
+            if ($allowedGuilds && !empty($config['groupMapping'])) {
+                // read Discord roles into NextCloud groups
+                $profile->data['groups'] = [];
+                $profile->data['group_mapping'] = $config['groupMapping'];
+                foreach($userGuilds as $guild) {
+                    if (empty($guild->id) || !in_array($guild->id, $allowedGuilds)) {
+                        // Only read groups from the explicitly declared guilds.
+                        // It doesn't make sense to try to map in random, unknown groups from arbitrary guilds.
+                        // and without this, a user in many guilds will trip a HTTP 429 rate limit from the Discord API.
+                        continue;
+                    }
+                    # https://discord.com/developers/docs/resources/guild#get-guild-member
+                    $guildMember = $adapter->apiRequest('users/@me/guilds/' . $guild->id . '/member' );
+                    $profile->data['groups'] = array_merge($profile->data['groups'], $guildMember->roles ?? []);
+                    // TODO: /member returns roles as their ID; to get their name requires an extra API call
+                    //       (and perhaps extra permissions?)
+                }
+            }
         }
 
         if (!empty($config['logout_url'])) {
@@ -484,7 +517,7 @@ class ProviderService
             ) {
                 throw new LoginException($this->l->t('Email already registered'));
             }
-            $userPassword = substr(base64_encode(random_bytes(64)), 0, 30);
+            $userPassword = '1@aA'.substr(base64_encode(random_bytes(64)), 0, 30);
             $user = $this->userManager->createUser($uid, $userPassword);
 
             if ($this->config->getAppValue($this->appName, 'create_disabled_users')) {
@@ -514,7 +547,7 @@ class ProviderService
 
             if (isset($profile->data['groups']) && is_array($profile->data['groups'])) {
                 $groups = $profile->data['groups'];
-                $groupMapping = isset($profile->data['group_mapping']) ? $profile->data['group_mapping'] : null;
+                $groupMapping = $profile->data['group_mapping'] ?? null;
                 $userGroups = $this->groupManager->getUserGroups($user);
                 $autoCreateGroups = $this->config->getAppValue($this->appName, 'auto_create_groups');
                 $syncGroups = [];
@@ -559,9 +592,21 @@ class ProviderService
 
             }
 
+            $updateAccount = false;
+            $account = $this->accountManager->getAccount($user);
             if (isset($profile->address)) {
-                $account = $this->accountManager->getAccount($user);
+                $updateAccount = true;
                 $account->setProperty(IAccountManager::PROPERTY_ADDRESS, $profile->address, IAccountManager::SCOPE_PRIVATE, IAccountManager::NOT_VERIFIED);
+            }
+            if (isset($profile->phone)) {
+                $updateAccount = true;
+                $account->setProperty(IAccountManager::PROPERTY_PHONE, $profile->phone, IAccountManager::SCOPE_PRIVATE, IAccountManager::NOT_VERIFIED);
+            }
+            if (isset($profile->webSiteURL)) {
+                $updateAccount = true;
+                $account->setProperty(IAccountManager::PROPERTY_WEBSITE, $profile->webSiteURL, IAccountManager::SCOPE_PRIVATE, IAccountManager::NOT_VERIFIED);
+            }
+            if ($updateAccount) {
                 $this->accountManager->updateAccount($account);
             }
 
